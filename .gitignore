@@ -1,4 +1,8 @@
 # dependencies
 /node_modules
 
+# dotEnv
+.env
 
+#WkSpaceVScode
+WSP11.code-workspace
