@@ -115,6 +115,25 @@ app.post("/messages", async(req, res)=>{
 
 app.get("/messages", async(req, res)=>{
 
+    const limit = parseInt(req.query.limit);
+    console.log(!limit);
+
+    try {
+        await mongoClient.connect();
+
+        if(!limit){
+            
+        }else{
+            const messages = await db.collection("messages").find({}).toArray();
+            console.log(messages);
+            res.send(messages);
+
+        }
+        
+    } catch (error) {
+        console.log(error);
+        
+    }
     
 
 
