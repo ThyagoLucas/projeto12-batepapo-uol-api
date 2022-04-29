@@ -5,8 +5,6 @@ import Joi from 'joi';
 import dotenv from 'dotenv';
 import dayjs from 'dayjs';
 
-
-
 const app = express();
 app.listen(5000, ()=>{
     console.log("servidor rodando na porta 5000");
@@ -17,16 +15,13 @@ app.use(cors());
 dotenv.config()
 
 const mongoClient = new MongoClient(process.env.MONGO_URL);
-
-let db = mongoClient.db(`"${process.env.DATA_BASE}"`);
+let db = mongoClient.db(`${process.env.DATA_BASE}`);
 
 app.post("/participants",  async (req, res)=>{
     
-    const hour = dayjs().format("HH:mm:ss");
     const {name}  = req.body;
     const user = {name, lastStatus:Date.now()};
-    const message = {from: name, to: 'Todos', text: 'entra na sala...', type: 'status', time: hour};
-
+    const message = createMessage(name, "Todos", "entra na sala...", "status");//{from, to, text, type}
     const schema = Joi.object({
         name: Joi.string()
         .alphanum()
@@ -57,8 +52,9 @@ app.post("/participants",  async (req, res)=>{
     }
     finally{
         await mongoClient.close();
+        
     }
-})
+});
 
 app.get("/participants", async (req, res) => {
 
@@ -71,9 +67,68 @@ app.get("/participants", async (req, res) => {
         console.log(error);
     }
     finally{
+        await mongoClient.close();
+      
+    }
+});
+
+app.post("/messages", async(req, res)=>{
+
+    const {to, text, type} = req.body;
+    const{user} = req.headers;
+    const schema = Joi.object({
+        findUser: Joi.object()
+        .required(),
+
+        to: Joi.string()
+        .required(),
+
+        text: Joi.string()
+        .required(),
+
+        type: Joi.string().equal("message", "private_message"),
+
+    });
+
+    try {
+        await mongoClient.connect();
+        const findUser = await db.collection("participants").findOne({name:user});
+
+        if(schema.validate({to, text, type,findUser}).error === undefined){
+            const message = createMessage(user, to, text, type); //{from, to, text, type};
+            await db.collection("messages").insertOne(message);
+            res.sendStatus(201);
+        }
+        else{
+            res.sendStatus(422);
+            console.log(schema.validate({to, text, type,findUser}).error)
+        }
+     
+    } catch (error) {
+        console.log(error);
+        
+    }
+    finally{
         await mongoClient.close()
     }
 });
+
+app.get("/messages", async(req, res)=>{
+
+    
+
+
+
+})
+
+
+function createMessage(from, to, text, type){
+
+    const hour = dayjs().format("HH:mm:ss");
+    const message = {from:from, to:to, text:text, type:type, time: hour};
+
+    return message;
+}
 
 
 
