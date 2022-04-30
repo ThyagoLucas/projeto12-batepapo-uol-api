@@ -124,22 +124,19 @@ app.get("/messages", async(req, res)=>{
 
 app.post("/status", async (req, res)=>{
 
+    const date = Date.now();
     const { user } = req.headers;   
 
     try {
-        //trabalhar aqui
 
-        const findUser = await db.collection("participants").findOneAndUpdate({name:user});
-       
-
-        if(findUser === null){
+        const findUser = await db.collection("participants").findOneAndUpdate({name:user},{$set:{lastStatus:date}}, {upsert:false});
+        
+        if(findUser.value === null){
             res.sendStatus(404); 
         }
         else{
             res.sendStatus(200);
         }
-
-       
         
     } catch (error) {
         
@@ -151,6 +148,8 @@ app.post("/status", async (req, res)=>{
 
 setInterval(()=>{
     const date = Date.now();
+    
+
     
 
 }, 10000)
