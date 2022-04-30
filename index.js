@@ -143,17 +143,23 @@ app.post("/status", async (req, res)=>{
     }
 
 
-});
-
+});//ok
 
 setInterval(()=>{
+
     const date = Date.now();
-    
+    const tenSecondsAgo = date - 10000;
 
-    
+    db.collection("participants").find().forEach((value)=>{
 
-}, 10000)
+        if(value.lastStatus < tenSecondsAgo){
+            const message = createMessage(value.name, 'Todos', 'sai da sala...', 'status');//{from, to, text, type};
+            db.collection("messages").insertOne(message);
+            db.collection("participants").deleteOne({name:value.name});
+        }
+    })
 
+}, 15000);//ok
 
 function createMessage(from, to, text, type){
 
@@ -161,5 +167,5 @@ function createMessage(from, to, text, type){
     const message = {from:from, to:to, text:text, type:type, time: hour};
 
     return message;
-};
+};//ok
 
